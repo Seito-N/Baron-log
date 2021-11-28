@@ -1,0 +1,142 @@
+---
+title: "Baron_toilet"
+author: "Seito-N"
+date: "`r Sys.Date()`"
+output: 
+  html_document:
+    toc: yes
+    toc_float: yes
+    number_section: yes
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+```
+
+```{r, include = FALSE}
+# packages
+
+library(tidyverse)
+library(dlookr)
+library(lubridate)
+```
+
+```{r, include = FALSE}
+
+# make data
+
+dat <- readxl::read_xlsx("baron_log.xlsx")
+
+dat2 <- dat %>% 
+  mutate(date = ymd(date)) %>% 
+  mutate(time = hms::as_hms(time)) %>% 
+  mutate(date_time = ymd_hms(paste(date, time))) %>% 
+  mutate(Oshikko = case_when(Oshikko_suc == 1 ~ 1, 
+                             Oshikko_suc == 0 ~ 0, 
+                             TRUE ~ NA_real_)) %>% 
+  mutate(Unchi = case_when(Unchi_suc == 1 ~ 1, 
+                           Unchi_suc == 0 ~ 0, 
+                           TRUE ~ NA_real_))
+```
+
+# 基礎的検討 {.tabset .tabset-fade .tabset-pills}
+
+## データの概観
+
+データの型を確認
+
+```{r}
+diagnose(dat2)
+```
+
+各データの冒頭部分
+
+```{r}
+head(dat2)
+```
+
+## 記述統計
+
+過去全体での成功率
+
+```{r}
+dat2 %>% 
+  select(date, Oshikko_suc, Unchi_suc) %>% 
+  pivot_longer(cols = c(Oshikko_suc, Unchi_suc), 
+               names_to = "peeing", 
+               values_to = "success") %>%
+  na.omit() %>% 
+  group_by(peeing) %>% 
+  summarise(
+    N = n(), 
+    Success = sum(success),
+    Success_ratio = sum(success)/length(peeing))
+```
+
+1日単位で追い掛けた時の成功率。データが溜まってきたら週単位出の集計に切り替えるか。
+
+```{r}
+dat2 %>% 
+  select(date, Oshikko_suc, Unchi_suc) %>% 
+  pivot_longer(cols = c(Oshikko_suc, Unchi_suc), 
+               names_to = "peeing", 
+               values_to = "success") %>%
+  na.omit() %>% 
+  group_by(date, peeing) %>% 
+  summarise(
+    N = n(), 
+    Success = sum(success),
+    Success_ratio = sum(success)/length(peeing))
+```
+
+# トイレの可視化 {.tabset .tabset-fade .tabset-pills}
+
+## おしっことうんちのプロット
+
+```{r}
+dat2 %>% 
+  select(date, time, Oshikko, Unchi) %>% 
+  pivot_longer(cols = c(Oshikko, Unchi), 
+               names_to = "Peeing", 
+               values_to = "toilet_flag") %>%
+  na.omit() %>% 
+  ggplot(data = ., mapping = aes(x = date, y = time, colour = Peeing)) + 
+  geom_point(size = 4) + 
+  scale_x_date(date_breaks = "1 days", date_labels = "%m-%d")
+```
+
+## おしっこ成否のプロット
+
+```{r}
+dat2 %>% 
+  select(date, time, Oshikko_suc) %>% 
+  mutate(Oshikko_suc = case_when(Oshikko_suc == 1 ~ "OK", 
+                                 Oshikko_suc == 0 ~ "NG")) %>% 
+  mutate(Oshikko_suc = fct_relevel(Oshikko_suc, "OK", "NG")) %>% 
+  na.omit() %>% 
+  ggplot(data = ., mapping = aes(x = date, y = time, 
+                                 colour = Oshikko_suc)) + 
+  geom_point(size = 4) + 
+  scale_colour_manual(values = c("OK" = "Blue",
+                                 "NG" = "Red")) + 
+  scale_x_date(date_breaks = "1 days", date_labels = "%m-%d")
+```
+
+## うんち成否のプロット
+
+```{r}
+dat2 %>% 
+  select(date, time, Unchi_suc) %>% 
+  mutate(Unchi_suc = case_when(Unchi_suc == 1 ~ "OK", 
+                                 Unchi_suc == 0 ~ "NG")) %>% 
+  mutate(Oshikko_suc = fct_relevel(Unchi_suc, "OK", "NG")) %>% 
+  na.omit() %>% 
+  ggplot(data = ., mapping = aes(x = date, y = time, 
+                                 colour = Unchi_suc)) + 
+  geom_point(size = 4) + 
+  scale_colour_manual(values = c("OK" = "Blue",
+                                 "NG" = "Red")) + 
+  scale_x_date(date_breaks = "1 days", date_labels = "%m-%d")
+```
+
+
