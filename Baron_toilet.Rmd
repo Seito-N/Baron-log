@@ -11,6 +11,7 @@ output:
 
 ```{r setup, include = FALSE}
 knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+options(tibble.print_max = Inf)
 ```
 
 ```{r, include = FALSE}
@@ -91,6 +92,30 @@ dat2 %>%
 
 # トイレの可視化 {.tabset .tabset-fade .tabset-pills}
 
+```{r}
+# make long data
+
+dat2_long <- dat2 %>% 
+  select(date, time, Oshikko, Unchi) %>% 
+  pivot_longer(cols = c(Oshikko, Unchi), 
+               names_to = "Peeing", 
+               values_to = "toilet_flag") %>%
+  na.omit() %>% 
+  mutate(time = as_datetime(time))
+```
+
+
+## おしっことうんちの回数
+
+```{r}
+dat2_long %>% 
+  ggplot(data = ., mapping = aes(x = date, colour = Peeing)) + 
+  geom_bar(alpha = 0.5, position = "dodge") + 
+  scale_x_date(date_breaks = "1 days", date_labels = "%m-%d") + 
+  facet_wrap(~ Peeing) + 
+  scale_y_continuous(breaks = seq(0, 100, by = 1))
+```
+
 ## おしっことうんちのプロット
 
 ```{r}
@@ -100,9 +125,12 @@ dat2 %>%
                names_to = "Peeing", 
                values_to = "toilet_flag") %>%
   na.omit() %>% 
+  mutate(time = as_datetime(time)) %>% 
   ggplot(data = ., mapping = aes(x = date, y = time, colour = Peeing)) + 
   geom_point(size = 4) + 
-  scale_x_date(date_breaks = "1 days", date_labels = "%m-%d")
+  scale_x_date(date_breaks = "1 days", date_labels = "%m-%d") + 
+  scale_y_datetime(breaks = scales::date_breaks("1 hour"),
+                   date_labels = "%H:%M")
 ```
 
 ## おしっこ成否のプロット
@@ -113,13 +141,16 @@ dat2 %>%
   mutate(Oshikko_suc = case_when(Oshikko_suc == 1 ~ "OK", 
                                  Oshikko_suc == 0 ~ "NG")) %>% 
   mutate(Oshikko_suc = fct_relevel(Oshikko_suc, "OK", "NG")) %>% 
+  mutate(time = as_datetime(time)) %>% 
   na.omit() %>% 
   ggplot(data = ., mapping = aes(x = date, y = time, 
                                  colour = Oshikko_suc)) + 
   geom_point(size = 4) + 
   scale_colour_manual(values = c("OK" = "Blue",
                                  "NG" = "Red")) + 
-  scale_x_date(date_breaks = "1 days", date_labels = "%m-%d")
+  scale_x_date(date_breaks = "1 days", date_labels = "%m-%d") + 
+  scale_y_datetime(breaks = scales::date_breaks("1 hour"),
+                   date_labels = "%H:%M")
 ```
 
 ## うんち成否のプロット
@@ -130,13 +161,16 @@ dat2 %>%
   mutate(Unchi_suc = case_when(Unchi_suc == 1 ~ "OK", 
                                  Unchi_suc == 0 ~ "NG")) %>% 
   mutate(Oshikko_suc = fct_relevel(Unchi_suc, "OK", "NG")) %>% 
+  mutate(time = as_datetime(time)) %>% 
   na.omit() %>% 
   ggplot(data = ., mapping = aes(x = date, y = time, 
                                  colour = Unchi_suc)) + 
   geom_point(size = 4) + 
   scale_colour_manual(values = c("OK" = "Blue",
-                                 "NG" = "Red")) + 
-  scale_x_date(date_breaks = "1 days", date_labels = "%m-%d")
+          it                       "NG" = "Red")) + 
+  scale_x_date(date_breaks = "1 days", date_labels = "%m-%d") +
+  scale_y_datetime(breaks = scales::date_breaks("1 hour"),
+                   date_labels = "%H:%M")
 ```
 
 
