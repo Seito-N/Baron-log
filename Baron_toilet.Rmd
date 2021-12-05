@@ -104,7 +104,6 @@ dat2_long <- dat2 %>%
   mutate(time = as_datetime(time))
 ```
 
-
 ## おしっことうんちの回数
 
 ```{r}
@@ -120,8 +119,8 @@ dat2_long %>%
 
 ```{r}
 dat2 %>% 
-  select(date, time, Oshikko, Unchi) %>% 
-  pivot_longer(cols = c(Oshikko, Unchi), 
+  select(date, time, Oshikko, Unchi, Gohan) %>% 
+  pivot_longer(cols = c(Oshikko, Unchi, Gohan), 
                names_to = "Peeing", 
                values_to = "toilet_flag") %>%
   na.omit() %>% 
@@ -167,7 +166,7 @@ dat2 %>%
                                  colour = Unchi_suc)) + 
   geom_point(size = 4) + 
   scale_colour_manual(values = c("OK" = "Blue",
-          it                       "NG" = "Red")) + 
+                                 "NG" = "Red")) + 
   scale_x_date(date_breaks = "1 days", date_labels = "%m-%d") +
   scale_y_datetime(breaks = scales::date_breaks("1 hour"),
                    date_labels = "%H:%M")
