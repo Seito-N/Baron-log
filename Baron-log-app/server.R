@@ -1,8 +1,8 @@
-library(shiny)
 library(tidyverse)
 library(lubridate)
+library(shiny)
 
-# Define server logic required to draw a histogram
+# Define server logic
 
 shinyServer(function(input, output) {
     

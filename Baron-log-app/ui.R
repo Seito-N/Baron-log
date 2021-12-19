@@ -8,8 +8,10 @@ shinyUI(fluidPage(
     # select the date
     dateRangeInput(inputId = "date", 
                    label = "集計期間", 
-                   start = min(dat2_long$date), 
-                   end = max(dat2_long$date),
+                   start = "2021-11-15", 
+                   end = "2022-12-31",
+                   min = "2021-11-15",
+                   max = "2100-1-1",
                    weekstart = 0),
     
     # show bar plot for freqency
