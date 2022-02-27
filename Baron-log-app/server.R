@@ -41,9 +41,21 @@ shinyServer(function(input, output) {
                mapping = aes(x = date, colour = Peeing)) + 
             geom_bar(alpha = 0.5) +
             scale_x_date(date_breaks = "1 days", date_labels = "%m-%d") + 
+            theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
             facet_wrap(~ Peeing) + 
             scale_y_continuous(breaks = seq(0, 100, by = 1))
             
     })
     
-})
+    summary_table <- reactive({
+        filter(dat2_long, between(date, input$date[1], input$date[2])) %>% 
+            group_by(Peeing) %>% 
+            summarise(
+                Frequency = n(), 
+                Success_rate = sum(toilet_flag)/n() %>% round(2))
+    })
+    
+    output$summary_table <- DT::renderDataTable({
+        summary_table() %>% 
+            mutate(across(where(is.numeric), round, digits = 2))})
+    })
