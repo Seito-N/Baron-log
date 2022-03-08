@@ -19,11 +19,13 @@ shinyServer(function(input, output) {
                                    TRUE ~ NA_real_)) %>% 
         mutate(Unchi = case_when(Unchi_suc == 1 ~ 1, 
                                  Unchi_suc == 0 ~ 0, 
-                                 TRUE ~ NA_real_))
+                                 TRUE ~ NA_real_)) %>% 
+        mutate(out = case_when(out == 1 ~ "out",
+                               TRUE ~ "in"))
     
     ## make long data
     dat2_long <- dat2 %>% 
-        select(date, time, Oshikko, Unchi) %>% 
+        select(date, time, Oshikko, Unchi, out) %>% 
         pivot_longer(cols = c(Oshikko, Unchi), 
                      names_to = "Peeing", 
                      values_to = "toilet_flag") %>%
@@ -38,12 +40,12 @@ shinyServer(function(input, output) {
         
         # bar plot
         ggplot(data = baron_data(), 
-               mapping = aes(x = date, colour = Peeing)) + 
+               mapping = aes(x = date, fill = out)) + 
             geom_bar(alpha = 0.5) +
             scale_x_date(date_breaks = "1 days", date_labels = "%m-%d") + 
+            scale_y_continuous(breaks = seq(0, 10, by = 1)) +
             theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
-            facet_wrap(~ Peeing) + 
-            scale_y_continuous(breaks = seq(0, 100, by = 1))
+            facet_wrap(~ Peeing)
             
     })
     
@@ -52,10 +54,13 @@ shinyServer(function(input, output) {
             group_by(Peeing) %>% 
             summarise(
                 Frequency = n(), 
-                Success_rate = sum(toilet_flag)/n() %>% round(2))
+                Out_freq = sum(out == "out"), 
+                Out_rate = sum(out == "out")/n(),
+                Success_rate = sum(toilet_flag)/n()
+                )
     })
     
     output$summary_table <- DT::renderDataTable({
         summary_table() %>% 
-            mutate(across(where(is.numeric), round, digits = 2))})
+            mutate(across(where(is.numeric), round, digits = 3))})
     })
